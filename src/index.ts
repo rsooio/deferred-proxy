@@ -9,34 +9,23 @@
 declare const noExpand: unique symbol;
 type NoExpand<T> = T & { [noExpand]?: never };
 
-export type Defined<T> = T extends undefined ? never : T;
+type Defined<T> = T extends undefined ? never : T;
 
-export type Unwrapable<T> = {
-  $<TResult1 = T, TResult2 = never>(
-    onfulfilled?:
-      | ((value: T) => TResult1 | PromiseLike<TResult1>)
-      | undefined
-      | null,
-    onrejected?:
-      | ((reason: any) => TResult2 | PromiseLike<TResult2>)
-      | undefined
-      | null
-  ): Promise<TResult1 | TResult2>;
+type Defer<T> = Promise<Awaited<T>> & {
+  fmap<U>(fn: (value: Awaited<T>) => U): Deferred<U>;
 };
 
-export type Deferred<T> = NoExpand<
+type Deferred<T> = NoExpand<
   Defined<T> extends (...args: infer Args) => infer Ret
-    ? (...args: Args) => Deferred<Awaited<Ret>> & Unwrapable<Awaited<Ret>>
+    ? (...args: Args) => Deferred<Awaited<Ret>> & Defer<Ret>
     : Defined<T> extends Array<infer U>
-    ? DeferredArray<U> & Unwrapable<Awaited<T>>
+    ? DeferredArray<U> & Defer<T>
     : Defined<T> extends object
-    ? { [K in keyof Defined<T>]: Deferred<Defined<T>[K]> } & Unwrapable<
-        Awaited<T>
-      >
-    : Unwrapable<Awaited<T>>
+    ? { [K in keyof Defined<T>]: Deferred<Defined<T>[K]> } & Defer<T>
+    : Defer<T>
 >;
 
-export interface DeferredArray<T> {
+type DeferredArray<T> = {
   [n: number]: Deferred<T>;
   length: Deferred<number>;
   map: <U>(
@@ -46,7 +35,7 @@ export interface DeferredArray<T> {
   filter: (
     callback: (value: T, index: number, array: T[]) => boolean
   ) => Deferred<T[]>;
-}
+};
 
 function defer<T>(promise: Promise<T>): Deferred<T>;
 function defer<F extends (...args: any[]) => any>(
@@ -59,7 +48,10 @@ function defer(arg: any): any {
   return new Proxy(() => {}, {
     get: (_, prop) => {
       if (prop === Symbol.toPrimitive) return () => "[Defer Proxy]";
-      if (prop === "$") return promise.then.bind(promise);
+      if (prop === "then") return promise.then.bind(promise);
+      if (prop === "catch") return promise.catch.bind(promise);
+      if (prop === "finally") return promise.finally.bind(promise);
+      if (prop === "fmap") return (fn: any) => defer(promise.then(fn));
       return defer(
         promise.then((v: any) => {
           const val = v?.[prop];
@@ -72,4 +64,4 @@ function defer(arg: any): any {
   });
 }
 
-export { defer };
+export { defer, type Deferred };
