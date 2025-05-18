@@ -1,0 +1,49 @@
+{
+  "name": "deferred-proxy",
+  "version": "0.1.0",
+  "description": "A utility library for deferred proxies",
+  "author": {
+    "name": "rsooio",
+    "email": "i@rsoo.io",
+    "url": "https://rsoo.io"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rsooio/deferred-proxy.git"
+  },
+  "keywords": [
+    "proxy",
+    "promise",
+    "async",
+    "await",
+    "suspense"
+  ],
+  "type": "module",
+  "main": "dist/deferred-proxy.umd.js",
+  "module": "dist/deferred-proxy.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/deferred-proxy.js",
+      "require": "./dist/deferred-proxy.umd.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^1.3.1",
+    "typescript": "~5.8.3",
+    "vite": "^6.3.5",
+    "vite-plugin-dts": "^4.5.4",
+    "vitest": "^1.3.1"
+  }
+}
