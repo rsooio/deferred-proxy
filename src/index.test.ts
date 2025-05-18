@@ -71,7 +71,8 @@ describe("defer", () => {
     const arr = [1, 2, 3, 4, 5];
     const deferred = defer(Promise.resolve(arr));
 
-    const mapped = deferred.map((x: number) => x * 2);
+    // const mapped = deferred.map.$((x: number) => x * 2);
+    const mapped = deferred.map.$((x: number) => x * 2);
     expect(String(mapped)).toBe("[Defer Proxy]");
     expect(await mapped).toEqual([2, 4, 6, 8, 10]);
   });
@@ -125,8 +126,8 @@ describe("defer", () => {
     };
 
     const deferred = defer(Promise.resolve(obj));
-    const processed = await deferred.getData().process(5);
-    const formatted = await deferred.getData().format(10);
+    const processed = await deferred.getData.$().process.$(5);
+    const formatted = await deferred.getData.$().format.$(10);
 
     expect(processed).toBe(10);
     expect(formatted).toBe("结果: 10");

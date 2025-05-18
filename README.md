@@ -5,7 +5,7 @@
 ## 功能特性
 
 - 支持链式访问 Promise 内嵌对象属性，如 `defer(promise).a.b.c`
-- 支持直接调用 Promise 结果的函数，如 `defer(promise).a.b.c(x)`
+- 支持直接调用 Promise 结果的函数，如 `defer(promise).a.b.c.$(x)` (使用 `$` 方法调用函数)
 - **完全实现标准 Promise 接口**，可以直接使用 `await` 或 `.then()/.catch()/.finally()`
 - **兼容 React 19 Suspense**，可以在 React 组件中直接使用
 - **提供 `fmap` 方法**，支持函数式编程风格的数据转换
@@ -38,8 +38,8 @@ const promise = Promise.resolve({
 // 链式访问属性，返回 Deferred
 const userName = defer(promise).user.name;
 
-// 调用 Promise 结果中的函数，返回 Deferred
-const greeting = defer(promise).user.greet("世界");
+// 调用 Promise 结果中的函数，使用 $ 方法，返回 Deferred
+const greeting = defer(promise).user.greet.$(["世界"]);
 
 // 直接使用 await 解包 Promise
 console.log(await userName); // 输出：张三
@@ -68,6 +68,16 @@ const formattedUser = deferredFetchUser(1).fmap((user) => ({
   displayName: `用户: ${user.name}`,
 }));
 console.log(await formattedUser); // 输出: { id: 1, name: '张三', displayName: '用户: 张三' }
+
+// 数组方法调用示例
+const userFriends = defer(promise).user.friends;
+// 使用数组的 map 方法，需要通过 $ 调用
+const upperFriends = userFriends.map.$((name) => name.toUpperCase());
+console.log(await upperFriends); // 输出: ['李四', '王五'] (转换为大写)
+
+// 使用数组的 slice 方法
+const firstFriend = userFriends.slice.$(0, 1);
+console.log(await firstFriend); // 输出: ['李四']
 ```
 
 ## 使用场景
@@ -94,7 +104,8 @@ function UserProfile({ userId }) {
       <h2>{user.name}</h2>
       <p>{user.bio}</p>
       <div>
-        {user.friends.map((friend) => (
+        {/* 使用 $ 调用数组的 map 方法 */}
+        {user.friends.map.$((friend) => (
           <span key={friend.id}>{friend.name}</span>
         ))}
       </div>
@@ -119,10 +130,10 @@ function App() {
 传入一个 Promise，返回一个代理对象 `Deferred<T>`，同时实现了 `Promise<T>` 接口，支持：
 
 - 属性访问时继续返回代理，保持链式调用
-- 函数调用时自动调用 Promise 解析后的函数，并返回代理结果
+- 函数调用时需要通过 `$` 方法，如 `defer(promise).func.$(arg1, arg2)`
 - 直接使用 `await` 或 `.then()/.catch()/.finally()` 方法
 - 支持 `.fmap(fn)` 方法，用于对 Promise 结果进行变换，类似 `Promise.then` 但返回 Deferred 对象
-- 支持对数组的常见操作方法链式调用
+- 支持对数组的常见操作方法链式调用，但需要通过 `$` 方法，如 `array.map.$((item) => ...)`
 
 ### `defer<F extends (...args: any[]) => any>(fn: F): (...args: Parameters<F>) => Deferred<Awaited<ReturnType<F>>> & Promise<Awaited<ReturnType<F>>>`
 
@@ -142,14 +153,24 @@ function App() {
 - 类似于 `Promise.then`，但保持了 Deferred 的特性，可以继续链式访问
 - 适合在保持 Deferred 特性的同时对数据进行转换
 
+### `Deferred<T>.$(...args: any[]): Deferred<ReturnType<T>>`
+
+当 `T` 是函数类型时，使用 `$` 方法调用该函数：
+
+- 参数 `args` 是传递给函数的参数列表
+- 返回一个新的 `Deferred` 对象，包含函数的返回值
+- 适用于调用 Promise 解析后的函数，同时保持 Deferred 的特性
+
 ## 类型说明
 
 - `Deferred<T> & Promise<T>` 表示一个对应于 `T` 结构的代理，同时实现了标准 Promise 接口
 - `Defer<T>` 包含 Promise 接口和 `fmap` 方法
-- 支持数组类型代理，包含 `.map()`、`.slice()`、`.filter()` 等常用方法
+- 支持数组类型代理，包含 `.map.$`、`.slice.$`、`.filter.$` 等需要通过 `$` 调用的方法
 
 ## 注意事项
 
+- 函数调用现在需要通过 `$` 方法，如 `obj.func.$(arg1, arg2)`
+- 数组方法如 `map`、`filter`、`slice` 等也需要通过 `$` 调用，如 `array.map.$((item) => ...)`
 - 如果传入的 Promise 发生拒绝（reject），可以通过标准的 Promise 接口处理异常，如 `.catch()` 或 async/await 的 try-catch
 - `fmap` 方法与 `Promise.then` 类似，但它始终返回 Deferred 对象，便于继续链式操作
 - 该库适合有复杂异步数据结构访问需求的场景，使用 TypeScript 时类型推断和编辑器补全体验最佳
