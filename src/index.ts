@@ -9,18 +9,16 @@
 declare const noExpand: unique symbol;
 type NoExpand<T> = T & { [noExpand]?: never };
 
-type Defined<T> = T extends undefined ? never : T;
-
 type Defer<T> = Promise<Awaited<T>> & {
   fmap<U>(fn: (value: Awaited<T>) => U): Deferred<U>;
 };
 
 type Deferred<T> = NoExpand<
-  Defined<T> extends (...args: infer Args) => infer Ret
+  NonNullable<T> extends (...args: infer Args) => infer Ret
     ? Defer<T> & DeferredFunction<Args, Ret>
-    : Defined<T> extends Array<infer U>
+    : NonNullable<T> extends Array<infer U>
     ? Defer<T> & DeferredArray<U>
-    : Defined<T> extends object
+    : NonNullable<T> extends object
     ? Defer<T> & DeferredObject<T>
     : Defer<T>
 >;
@@ -32,7 +30,17 @@ type DeferredFunction<Args extends any[], Ret> = {
 };
 
 type DeferredObject<T> = {
-  [K in keyof Defined<T>]: Deferred<Defined<T>[K]>;
+  [K in keyof T as undefined extends T[K]
+    ? never
+    : null extends T[K]
+    ? never
+    : K]: Deferred<NonNullable<T>[K]>;
+} & {
+  [K in keyof T as undefined extends T[K]
+    ? K
+    : null extends T[K]
+    ? K
+    : never]?: Deferred<NonNullable<T>[K]>;
 };
 
 type DeferredArray<T> = {
