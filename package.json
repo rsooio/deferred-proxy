@@ -7,7 +7,7 @@
     "email": "i@rsoo.io",
     "url": "https://rsoo.io"
   },
-  "license": "MIT",
+  "license": "WTFPL",
   "repository": {
     "type": "git",
     "url": "https://github.com/rsooio/deferred-proxy.git"

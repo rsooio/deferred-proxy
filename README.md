@@ -114,4 +114,4 @@ function UserProfile({ userId }) {
 
 ## 许可证
 
-MIT
+WTFPL
