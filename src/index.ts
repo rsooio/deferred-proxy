@@ -10,7 +10,7 @@ declare const noExpand: unique symbol;
 type NoExpand<T> = T & { [noExpand]?: never };
 
 type Defer<T> = Promise<Awaited<T>> & {
-  fmap<U>(fn: (value: Awaited<T>) => U): Deferred<U>;
+  fmap<U>(fn: (value: Awaited<T>) => U): Deferred<Awaited<U>>;
 };
 
 type Deferred<T> = NoExpand<
