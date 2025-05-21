@@ -74,7 +74,8 @@ function defer(arg: any): any {
       if (prop === "finally") return promise.finally.bind(promise);
       if (prop === "fmap") return (fn: any) => defer(promise.then(fn));
       if (prop === "$")
-        return (...args: any[]) => defer(promise.then((v: any) => v(...args)));
+        return (...args: any[]) =>
+          defer(promise.then((v: any) => v?.(...args)));
       return defer(
         promise.then((v: any) => {
           const val = v?.[prop];
