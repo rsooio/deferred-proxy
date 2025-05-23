@@ -29,18 +29,21 @@ type DeferredFunction<Args extends any[], Ret> = {
   $: Func<Args, Ret>;
 };
 
+type Pretty<T> = T extends infer U ? { [K in keyof U]: U[K] } : never;
+type PrettyPartial<T> = Pretty<{ [K in keyof T]?: T[K] }>;
+
 type DeferredObject<T> = {
   [K in keyof T as undefined extends T[K]
     ? never
     : null extends T[K]
     ? never
-    : K]: Deferred<NonNullable<T>[K]>;
+    : K]: Deferred<T[K]>;
 } & {
   [K in keyof T as undefined extends T[K]
     ? K
     : null extends T[K]
     ? K
-    : never]?: Deferred<NonNullable<T>[K]>;
+    : never]-?: Deferred<PrettyPartial<T[K]>>;
 };
 
 type DeferredArray<T> = {

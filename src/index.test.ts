@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { defer } from "./index";
+import { describe, it, expect, expectTypeOf } from "vitest";
+import { defer, Deferred } from "./index";
 
 const isDeferred = (value: any) => String(value) === "[Defer Proxy]";
 
@@ -243,5 +243,15 @@ describe("defer", () => {
 
     expect(String(mapped)).toBe("[Defer Proxy]");
     expect(await mapped).toBe(2);
+  });
+
+  it("应该实现空值传导", async () => {
+    type A = { a?: { b: { c: { v: number } | null } | undefined } };
+    const a: A = {};
+    const deferred = defer(Promise.resolve<A>(a));
+
+    expectTypeOf(deferred.a.b.c.v).toEqualTypeOf<
+      Deferred<number | undefined>
+    >();
   });
 });
